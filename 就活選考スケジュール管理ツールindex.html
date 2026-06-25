@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>就活選考スケジュール管理ツール | Portfolio</title>
+    <style>
+        :root {
+            --bg-color: #f4f6f9;
+            --text-color: #2c3e50;
+            --border-color: #dee2e6;
+            --primary-color: #3498db;
+            --primary-hover: #2980b9;
+            --danger-color: #e74c3c;
+            --danger-hover: #c0392b;
+            --edit-color: #f39c12;
+            --edit-hover: #d35400;
+            
+            /* ステータス別カラー（コントラスト厳格確保） */
+            --bg-mientry: #ffffff;      --text-mientry: #2c3e50;
+            --bg-essakusei: #e3f2fd;    --text-essakusei: #0d47a1;
+            --bg-esteishutsu: #f3e5f5;  --text-esteishutsu: #4a148c;
+            --bg-mensetsu: #fffde7;     --text-mensetsu: #f57f17;
+            --bg-kekkamaqi: #fff3e0;    --text-kekkamaqi: #e65100;
+            --bg-naitei: #e8f5e9;       --text-naitei: #1b5e20;
+            --bg-fugokaku: #e0e0e0;     --text-fugokaku: #424242;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            flex: 1;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 2rem;
+        }
+
+        h2 {
+            font-size: 1.3rem;
+            margin-top: 0;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ダッシュボード（今週やるべきこと） */
+        .dashboard {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+            border-left: 5px solid #ff7675;
+        }
+
+        .todo-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .todo-item {
+            padding: 10px;
+            border-bottom: 1px dashed var(--border-color);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+        }
+
+        .todo-item:last-child {
+            border-bottom: none;
+        }
+
+        .todo-tag {
+            background-color: #ff7675;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-right: 10px;
+        }
+
+        /* 入力フォーム */
+        .form-panel {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            align-items: flex-end;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        .form-group input, .form-group select {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.95rem;
+            color: var(--text-color);
+            background-color: #fff;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+        .btn-secondary { background-color: #95a5a6; color: white; }
+        .btn-secondary:hover { background-color: #7f8c8d; }
+        .btn-edit { background-color: var(--edit-color); color: white; padding: 6px 12px; font-size: 0.85rem; }
+        .btn-edit:hover { background-color: var(--edit-hover); }
+        .btn-delete { background-color: var(--danger-color); color: white; padding: 6px 12px; font-size: 0.85rem; }
+        .btn-delete:hover { background-color: var(--danger-hover); }
+
+        /* 一覧テーブル */
+        .table-panel {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 14px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* ステータス別の配色（コントラスト確保済） */
+        .row-未エントリー { background-color: var(--bg-mientry); color: var(--text-mientry); }
+        .row-ES作成中 { background-color: var(--bg-essakusei); color: var(--text-essakusei); }
+        .row-ES提出済み { background-color: var(--bg-esteishutsu); color: var(--text-esteishutsu); }
+        .row-面接予定 { background-color: var(--bg-mensetsu); color: var(--text-mensetsu); }
+        .row-結果待ち { background-color: var(--bg-kekkamaqi); color: var(--text-kekkamaqi); }
+        .row-内定 { background-color: var(--bg-naitei); color: var(--text-naitei); }
+        .row-不合格 { background-color: var(--bg-fugokaku); color: var(--text-fugokaku); }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .empty-message {
+            color: #7f8c8d;
+            font-style: italic;
+            padding: 10px 0;
+        }
+
+        /* ポートフォリオ用フッター */
+        footer {
+            margin-top: 40px;
+            padding: 20px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            border-top: 1px solid var(--border-color);
+            background-color: #fff;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: bold;
+        }
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>選考スケジュール管理ツール</h1>
+
+    <div class="dashboard">
+        <h2>📅 今週やるべきこと（直近7日以内の締切・面接）</h2>
+        <ul id="todoList" class="todo-list"></ul>
+    </div>
+
+    <div class="form-panel">
+        <h2>📝 企業の追加・編集</h2>
+        <form id="companyForm" onsubmit="handleSubmit(event)">
+            <input type="hidden" id="editId">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="companyName">企業名</label>
+                    <input type="text" id="companyName" required placeholder="例: ○○株式会社">
+                </div>
+                <div class="form-group">
+                    <label for="esDate">ES提出期限</label>
+                    <input type="date" id="esDate">
+                </div>
+                <div class="form-group">
+                    <label for="interviewDate">面接日程</label>
+                    <input type="date" id="interviewDate">
+                </div>
+                <div class="form-group">
+                    <label for="status">選考ステータス</label>
+                    <select id="status">
+                        <option value="未エントリー">未エントリー</option>
+                        <option value="ES作成中">ES作成中</option>
+                        <option value="ES提出済み">ES提出済み</option>
+                        <option value="面接予定">面接予定</option>
+                        <option value="結果待ち">結果待ち</option>
+                        <option value="内定">内定</option>
+                        <option value="不合格">不合格</option>
+                    </select>
+                </div>
+                <div class="btn-group">
+                    <button type="submit" id="submitBtn" class="btn-primary">追加する</button>
+                    <button type="button" id="cancelBtn" class="btn-secondary" style="display: none;" onclick="resetForm()">キャンセル</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-panel">
+        <h2>🏢 エントリー企業一覧</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>企業名</th>
+                    <th>ES提出期限</th>
+                    <th>面接日程</th>
+                    <th>ステータス</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="companyTableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<footer>
+    <p>Web Application Portfolio | Designed & Developed by Your Name</p>
+    <p><a href="#" target="_blank">GitHub Repository</a> | <a href="#" target="_blank">About Me</a></p>
+</footer>
+
+<script>
+    const STORAGE_KEY = 'shukatsu_scheduler_data';
+    let companies = [];
+
+    window.onload = function() {
+        loadData();
+        if (companies.length === 0) {
+            insertSampleData();
+        }
+        render();
+    };
+
+    function loadData() {
+        const data = localStorage.getItem(STORAGE_KEY);
+        companies = data ? JSON.parse(data) : [];
+    }
+
+    function saveData() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(companies));
+    }
+
+    function insertSampleData() {
+        const today = new Date();
+        const formatDate = (offsetDays) => {
+            const d = new Date();
+            d.setDate(today.getDate() + offsetDays);
+            return d.toISOString().split('T')[0];
+        };
+
+        companies = [
+            { id: '1', name: '大中精機株式会社', esDate: formatDate(2), interviewDate: '', status: 'ES作成中' },
+            { id: '2', name: '東洋ITソリューションズ', esDate: formatDate(-5), interviewDate: formatDate(4), status: '面接予定' },
+            { id: '3', name: '帝都コンサルティンググループ', esDate: formatDate(12), interviewDate: '', status: '未エントリー' },
+            { id: '4', name: '日本マテリアル貿易', esDate: formatDate(-15), interviewDate: formatDate(-3), status: '内定' },
+            { id: '5', name: 'フロンティア流通', esDate: formatDate(-10), interviewDate: '', status: '不合格' }
+        ];
+        saveData();
+    }
+
+    function handleSubmit(event) {
+        event.preventDefault();
+        const id = document.getElementById('editId').value;
+        const name = document.getElementById('companyName').value;
+        const esDate = document.getElementById('esDate').value;
+        const interviewDate = document.getElementById('interviewDate').value;
+        const status = document.getElementById('status').value;
+
+        if (id) {
+            const index = companies.findIndex(c => c.id === id);
+            if (index !== -1) {
+                companies[index] = { id, name, esDate, interviewDate, status };
+            }
+        } else {
+            companies.push({ id: Date.now().toString(), name, esDate, interviewDate, status });
+        }
+
+        saveData();
+        resetForm();
+        render();
+    }
+
+    function editCompany(id) {
+        const company = companies.find(c => c.id === id);
+        if (!company) return;
+
+        document.getElementById('editId').value = company.id;
+        document.getElementById('companyName').value = company.name;
+        document.getElementById('esDate').value = company.esDate;
+        document.getElementById('interviewDate').value = company.interviewDate;
+        document.getElementById('status').value = company.status;
+
+        document.getElementById('submitBtn').textContent = '更新する';
+        document.getElementById('cancelBtn').style.display = 'inline-block';
+        document.getElementById('companyName').focus();
+    }
+
+    function deleteCompany(id) {
+        if (confirm('この企業データを削除してもよろしいですか？')) {
+            companies = companies.filter(c => c.id !== id);
+            saveData();
+            render();
+        }
+    }
+
+    function resetForm() {
+        document.getElementById('editId').value = '';
+        document.getElementById('companyForm').reset();
+        document.getElementById('submitBtn').textContent = '追加する';
+        document.getElementById('cancelBtn').style.display = 'none';
+    }
+
+    function getSortScore(company) {
+        const isCompleted = (company.status === '内定' || company.status === '不合格') ? 1 : 0;
+        const esTime = company.esDate ? new Date(company.esDate).getTime() : Infinity;
+        const ivTime = company.interviewDate ? new Date(company.interviewDate).getTime() : Infinity;
+        return { isCompleted, time: Math.min(esTime, ivTime) };
+    }
+
+    function render() {
+        const tableBody = document.getElementById('companyTableBody');
+        const todoList = document.getElementById('todoList');
+        
+        tableBody.innerHTML = '';
+        todoList.innerHTML = '';
+
+        companies.sort((a, b) => {
+            const scoreA = getSortScore(a);
+            const scoreB = getSortScore(b);
+            if (scoreA.isCompleted !== scoreB.isCompleted) return scoreA.isCompleted - scoreB.isCompleted;
+            return scoreA.time - scoreB.time;
+        });
+
+        companies.forEach(company => {
+            const tr = document.createElement('tr');
+            tr.className = `row-${company.status}`;
+            tr.innerHTML = `
+                <td><strong>${escapeHtml(company.name)}</strong></td>
+                <td>${company.esDate ? company.esDate : '-'}</td>
+                <td>${company.interviewDate ? company.interviewDate : '-'}</td>
+                <td><strong>${company.status}</strong></td>
+                <td class="actions">
+                    <button class="btn-edit" onclick="editCompany('${company.id}')">編集</button>
+                    <button class="btn-delete" onclick="deleteCompany('${company.id}')">削除</button>
+                </td>
+            `;
+            tableBody.appendChild(tr);
+        });
+
+        if (companies.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="5" class="empty-message">企業が登録されていません。</td></tr>`;
+        }
+
+        const today = new Date(); today.setHours(0,0,0,0);
+        const sevenDaysLater = new Date(); Axel = sevenDaysLater.setDate(today.getDate() + 7);
+
+        let todoCount = 0;
+        companies.forEach(company => {
+            if (company.status === '内定' || company.status === '不合格') return;
+
+            const checkTask = (dateStr, typeLabel) => {
+                if (!dateStr) return;
+                const taskDate = new Date(dateStr);
+                if (taskDate >= today && taskDate <= sevenDaysLater) {
+                    const li = document.createElement('li');
+                    li.className = 'todo-item';
+                    li.innerHTML = `<div><span class="todo-tag">${typeLabel}</span><span>${escapeHtml(company.name)}</span></div><div>${dateStr}</div>`;
+                    todoList.appendChild(li);
+                    todoCount++;
+                }
+            };
+            checkTask(company.esDate, 'ES締切');
+            checkTask(company.interviewDate, '面接');
+        });
+
+        if (todoCount === 0) {
+            todoList.innerHTML = `<li class="empty-message" style="color: #27ae60; font-weight: bold;">🎉 直近7日以内に対応が必要な予定はありません。</li>`;
+        }
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+</script>
+</body>
+</html>
